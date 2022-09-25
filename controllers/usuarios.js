@@ -6,17 +6,24 @@ const usuario = require('../models/usuario');
 const Usuario = require( '../models/usuario');
 
 
-const usuariosGet = (req = request, res = response) => {
+const usuariosGet = async (req = request, res = response) => {
 
-    const { q, nombre = 'No name', apikey, page = 1, limit } = req.query;
+    // const { q, nombre = 'No name', apikey, page = 1, limit } = req.query;
+    const query = { estado: true };
+    const { limite = 5, desde = 0 } =  req.query;
+
+
+    const [ total, usuarios ] = await Promise.all([ 
+        Usuario.countDocuments( query ),
+        Usuario
+            .find( query )
+            .skip( desde )
+            .limit( Number( limite ) )
+    ]);
 
     res.json({
-        msg: 'get API - controlador',
-        q,
-        nombre,
-        apikey,
-        page, 
-        limit
+        total,
+        usuarios
     });
 }
 
@@ -42,7 +49,7 @@ const usuariosPost = async (req, res = response) => {
 const usuariosPut = async (req, res = response) => {
 
     const { id } = req.params;
-    const { password, google, ...resto } = req.body;
+    const { _id, password, google, ...resto } = req.body;
 
     // TODO: Validar con la BD
 
@@ -66,9 +73,17 @@ const usuariosPatch = (req, res = response) => {
     });
 }
 
-const usuariosDelete = (req, res = response) => {
+const usuariosDelete = async (req, res = response) => {
+    const { id } = req.params;
+    
+    // Eliminar fisicamente
+    // const usuario = await Usuario.findByIdAndDelete( id )
+    
+    const usuario = await Usuario.findByIdAndUpdate( id, { estado: false } )
+    
     res.json({
-        msg: 'delete API - usuariosDelete'
+        msg: 'delete API - usuariosDelete',
+        usuario
     });
 }
 
